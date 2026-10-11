@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="720.0" prefWidth="1050.0" styleClass="main-bg" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smartstudy.javafx.controller.TaskController">
+   <left>
+      <VBox prefWidth="230.0" spacing="10.0" styleClass="sidebar">
+         <padding>
+            <Insets bottom="20.0" left="16.0" right="16.0" top="24.0" />
+         </padding>
+         <children>
+            <Label styleClass="app-title" text="⚡ SmartStudy" />
+            <Label styleClass="text-muted" text="Academic Management" />
+            
+            <VBox spacing="6.0" VBox.vgrow="ALWAYS">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToDashboard" styleClass="nav-btn" text="📊 Dashboard" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToSubjects" styleClass="nav-btn" text="📚 Subjects" />
+                  <Button maxWidth="1.7976931348623157E308" styleClass="nav-btn-active" text="📝 Tasks &amp; To-Dos" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToExams" styleClass="nav-btn" text="🎯 Exams &amp; Marks" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToStudy" styleClass="nav-btn" text="⏱ Study Tracker" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToProgress" styleClass="nav-btn" text="📈 Progress Analytics" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </left>
+
+   <center>
+      <VBox spacing="18.0" styleClass="content-pane">
+         <children>
+            <VBox spacing="4.0">
+               <children>
+                  <Label styleClass="page-title" text="📝 Task &amp; Assignment Management" />
+                  <Label styleClass="text-muted" text="Organize assignments and study milestones (demonstrates custom InvalidTaskException &amp; ArrayList filtering)" />
+               </children>
+            </VBox>
+
+            <!-- Add Task Form Card -->
+            <VBox spacing="12.0" styleClass="card">
+               <children>
+                  <Label styleClass="section-title" text="➕ Create New Academic Task" />
+                  
+                  <HBox spacing="10.0">
+                     <children>
+                        <TextField fx:id="titleField" promptText="Task Title (e.g. Implement Dijkstra Algorithm)" HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="subjectComboBox" prefWidth="240.0" promptText="Select Subject" />
+                     </children>
+                  </HBox>
+
+                  <HBox spacing="10.0">
+                     <children>
+                        <TextField fx:id="descField" promptText="Description / notes" HBox.hgrow="ALWAYS" />
+                        <DatePicker fx:id="deadlinePicker" prefWidth="180.0" promptText="Deadline" />
+                        <ComboBox fx:id="priorityComboBox" prefWidth="130.0" promptText="Priority (1-5)" />
+                        <TextField fx:id="estimatedMinutesField" prefWidth="120.0" promptText="Est. Mins (60)" />
+                     </children>
+                  </HBox>
+
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Button onAction="#handleAddTask" styleClass="btn-primary" text="Add Task" />
+                        <!-- Button explicitly showing custom exception handling -->
+                        <Button onAction="#handleTestInvalidDeadlineException" styleClass="btn-secondary" text="⚠️ Test Invalid Deadline (InvalidTaskException)" />
+                        <Label fx:id="statusLabel" text="" wrapText="true" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <!-- Task List Table Card -->
+            <VBox spacing="12.0" VBox.vgrow="ALWAYS" styleClass="card">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Label styleClass="section-title" text="Task List" />
+                        <HBox HBox.hgrow="ALWAYS" />
+                        <Label styleClass="text-muted" text="Filter:" />
+                        <ComboBox fx:id="filterComboBox" prefWidth="150.0" />
+                        <Button onAction="#handleMarkComplete" styleClass="btn-success" text="✔ Mark Complete" />
+                        <Button onAction="#handleDeleteTask" styleClass="btn-danger" text="🗑 Delete" />
+                     </children>
+                  </HBox>
+
+                  <TableView fx:id="taskTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                        <TableColumn fx:id="colTitle" prefWidth="300.0" text="Task Title" />
+                        <TableColumn fx:id="colPriority" prefWidth="80.0" text="Priority" />
+                        <TableColumn fx:id="colDeadline" prefWidth="130.0" text="Deadline" />
+                        <TableColumn fx:id="colStatus" prefWidth="120.0" text="Status" />
+                        <TableColumn fx:id="colEstMinutes" prefWidth="110.0" text="Est. Mins" />
+                     </columns>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

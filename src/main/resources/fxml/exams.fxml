@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="720.0" prefWidth="1050.0" styleClass="main-bg" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smartstudy.javafx.controller.ExamController">
+   <left>
+      <VBox prefWidth="230.0" spacing="10.0" styleClass="sidebar">
+         <padding>
+            <Insets bottom="20.0" left="16.0" right="16.0" top="24.0" />
+         </padding>
+         <children>
+            <Label styleClass="app-title" text="⚡ SmartStudy" />
+            <Label styleClass="text-muted" text="Academic Management" />
+            
+            <VBox spacing="6.0" VBox.vgrow="ALWAYS">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToDashboard" styleClass="nav-btn" text="📊 Dashboard" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToSubjects" styleClass="nav-btn" text="📚 Subjects" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToTasks" styleClass="nav-btn" text="📝 Tasks &amp; To-Dos" />
+                  <Button maxWidth="1.7976931348623157E308" styleClass="nav-btn-active" text="🎯 Exams &amp; Marks" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToStudy" styleClass="nav-btn" text="⏱ Study Tracker" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToProgress" styleClass="nav-btn" text="📈 Progress Analytics" />
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </left>
+
+   <center>
+      <VBox spacing="18.0" styleClass="content-pane">
+         <children>
+            <VBox spacing="4.0">
+               <children>
+                  <Label styleClass="page-title" text="🎯 Exam Management &amp; Scores" />
+                  <Label styleClass="text-muted" text="Track upcoming exams, targets, and actual scores obtained" />
+               </children>
+            </VBox>
+
+            <!-- Add Exam Card -->
+            <VBox spacing="12.0" styleClass="card">
+               <children>
+                  <Label styleClass="section-title" text="➕ Add Upcoming Exam" />
+                  <HBox spacing="10.0">
+                     <children>
+                        <TextField fx:id="examNameField" promptText="Exam Name (e.g., DAA Final CAT)" HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="subjectComboBox" prefWidth="240.0" promptText="Select Subject" />
+                        <DatePicker fx:id="examDatePicker" prefWidth="180.0" promptText="Exam Date" />
+                        <TextField fx:id="targetMarksField" prefWidth="120.0" promptText="Target (50)" />
+                        <Button onAction="#handleAddExam" styleClass="btn-primary" text="Add Exam" />
+                     </children>
+                  </HBox>
+                  <Label fx:id="statusLabel" text="" />
+               </children>
+            </VBox>
+
+            <!-- Record Marks Card -->
+            <VBox spacing="12.0" styleClass="card">
+               <children>
+                  <Label styleClass="section-title" text="📝 Record Marks for Completed Exam" />
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Label styleClass="text-muted" text="Select an exam from the table below, enter marks obtained, and click Save:" />
+                        <TextField fx:id="marksObtainedField" prefWidth="140.0" promptText="Marks Obtained" />
+                        <Button onAction="#handleRecordMarks" styleClass="btn-success" text="Save Marks" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <!-- Table Card -->
+            <VBox spacing="12.0" VBox.vgrow="ALWAYS" styleClass="card">
+               <children>
+                  <Label styleClass="section-title" text="Recorded Exams Schedule" />
+                  <TableView fx:id="examTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="colId" prefWidth="50.0" text="ID" />
+                        <TableColumn fx:id="colName" prefWidth="280.0" text="Exam Name" />
+                        <TableColumn fx:id="colSubject" prefWidth="240.0" text="Subject" />
+                        <TableColumn fx:id="colDate" prefWidth="130.0" text="Date" />
+                        <TableColumn fx:id="colTargetMarks" prefWidth="120.0" text="Target Marks" />
+                        <TableColumn fx:id="colMarksObtained" prefWidth="130.0" text="Marks Obtained" />
+                     </columns>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

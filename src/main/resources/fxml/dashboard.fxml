@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="720.0" prefWidth="1050.0" styleClass="main-bg" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.smartstudy.javafx.controller.DashboardController">
+   <!-- Left Sidebar Navigation -->
+   <left>
+      <VBox prefWidth="230.0" spacing="10.0" styleClass="sidebar">
+         <padding>
+            <Insets bottom="20.0" left="16.0" right="16.0" top="24.0" />
+         </padding>
+         <children>
+            <Label styleClass="app-title" text="⚡ SmartStudy" />
+            <Label styleClass="text-muted" text="Academic Management" />
+            
+            <VBox spacing="6.0" VBox.vgrow="ALWAYS">
+               <padding>
+                  <Insets top="20.0" />
+               </padding>
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToDashboard" styleClass="nav-btn-active" text="📊 Dashboard" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToSubjects" styleClass="nav-btn" text="📚 Subjects" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToTasks" styleClass="nav-btn" text="📝 Tasks &amp; To-Dos" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToExams" styleClass="nav-btn" text="🎯 Exams &amp; Marks" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToStudy" styleClass="nav-btn" text="⏱ Study Tracker" />
+                  <Button maxWidth="1.7976931348623157E308" onAction="#navToProgress" styleClass="nav-btn" text="📈 Progress Analytics" />
+               </children>
+            </VBox>
+            
+            <Button maxWidth="1.7976931348623157E308" onAction="#handleLogout" styleClass="btn-danger" text="🚪 Logout" />
+         </children>
+      </VBox>
+   </left>
+
+   <!-- Main Content Center -->
+   <center>
+      <ScrollPane fitToWidth="true" style="-fx-background: #0F172A; -fx-background-color: transparent;">
+         <content>
+            <VBox spacing="20.0" styleClass="content-pane">
+               <children>
+                  <!-- Header Area -->
+                  <HBox alignment="CENTER_LEFT">
+                     <children>
+                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label fx:id="studentNameLabel" styleClass="page-title" text="Welcome back, Student!" />
+                              <Label fx:id="currentDateLabel" styleClass="text-muted" text="Today" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- 4 Metric KPI Cards -->
+                  <HBox spacing="16.0">
+                     <children>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="card-stat">
+                           <children>
+                              <Label styleClass="text-muted" text="Overall Progress" />
+                              <Label fx:id="overallProgressLabel" styleClass="stat-value" text="0%" />
+                           </children>
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="card-stat">
+                           <children>
+                              <Label styleClass="text-muted" text="Total Study Hours" />
+                              <Label fx:id="totalStudyHoursLabel" styleClass="stat-value-emerald" text="0 hrs" />
+                           </children>
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="card-stat">
+                           <children>
+                              <Label styleClass="text-muted" text="Pending Tasks" />
+                              <Label fx:id="pendingTasksCountLabel" styleClass="stat-value-amber" text="0" />
+                           </children>
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" styleClass="card-stat">
+                           <children>
+                              <Label styleClass="text-muted" text="Upcoming Exams" />
+                              <Label fx:id="upcomingExamsCountLabel" styleClass="stat-value" text="0" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Recommendations & Urgent Tasks Grid -->
+                  <HBox spacing="16.0">
+                     <children>
+                        <!-- Recommendations Box -->
+                        <VBox spacing="12.0" HBox.hgrow="ALWAYS" styleClass="card">
+                           <children>
+                              <Label styleClass="section-title" text="💡 Intelligent Rule-Based Recommendations" />
+                              <Label styleClass="text-muted" text="Automated priority calculation based on upcoming exams &amp; overdue tasks" />
+                              <VBox fx:id="recommendationContainer" spacing="8.0" />
+                           </children>
+                        </VBox>
+
+                        <!-- Prioritized Urgent Tasks Box -->
+                        <VBox prefWidth="380.0" spacing="12.0" styleClass="card">
+                           <children>
+                              <Label styleClass="section-title" text="🔥 Urgent Task Queue" />
+                              <Label styleClass="text-muted" text="Tasks ordered by PriorityQueue" />
+                              <ListView fx:id="urgentTasksListView" prefHeight="130.0" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Multithreaded Report Generation Box -->
+                  <VBox spacing="12.0" styleClass="card">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="16.0">
+                           <children>
+                              <VBox HBox.hgrow="ALWAYS" spacing="4.0">
+                                 <children>
+                                    <Label styleClass="section-title" text="📄 Weekly Academic Report Generator" />
+                                    <Label styleClass="text-muted" text="Runs on a background thread (JavaFX Task) without freezing the UI. Writes &amp; reads TXT file on disk." />
+                                 </children>
+                              </VBox>
+                              <Button fx:id="generateReportBtn" onAction="#handleGenerateReportAsync" styleClass="btn-primary" text="⚡ Generate Report (Background Thread)" />
+                              <Button onAction="#handleViewPreviousReport" styleClass="btn-secondary" text="📂 View Previous Report" />
+                           </children>
+                        </HBox>
+
+                        <VBox spacing="6.0">
+                           <children>
+                              <ProgressBar fx:id="reportProgressBar" maxWidth="1.7976931348623157E308" prefHeight="10.0" />
+                              <Label fx:id="reportStatusLabel" text="" />
+                           </children>
+                        </VBox>
+
+                        <TextArea fx:id="reportPreviewArea" editable="false" prefHeight="150.0" promptText="Generated report preview will appear here..." wrapText="true" />
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

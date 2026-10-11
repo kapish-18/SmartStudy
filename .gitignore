@@ -1,0 +1,10 @@
+target/
+*.class
+reports/*.txt
+.system_generated/
+.idea/
+*.iml
+.vscode/
+.settings/
+.project/
+.classpath/
