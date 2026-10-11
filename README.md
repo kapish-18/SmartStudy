@@ -283,15 +283,44 @@ mysql -u root -p < database/schema.sql
 
 ## 6. How to Run the Project
 
-### Running the JavaFX Desktop Client
-Simply run the included script:
-```powershell
+### Prerequisites
+- **Java Development Kit (JDK) 21** or higher installed and added to `PATH`.
+- *(Optional)* **Apache Maven 3.8+** (recommended for cross-platform dependency resolution).
+- *(Optional)* **MySQL Server** (if you want persistent DB storage; otherwise the app will use its built-in offline mock data).
+
+---
+
+### Option A: One-Click Desktop Launch (Windows)
+Double-click or run:
+```cmd
 .\run.bat
 ```
-or in PowerShell:
-```powershell
-.\run.ps1
+*(Or in PowerShell: `.\run.ps1`)*
+
+The script will automatically detect Maven or JDK, compile any missing sources, and launch the application.
+
+---
+
+### Option B: Standard Maven Command (Cross-Platform)
+If you have Maven installed:
+```bash
+mvn clean compile javafx:run
 ```
+
+---
+
+### Option C: Teacher / Admin Web Portal (JSP + Servlets)
+1. Build the WAR package:
+   ```bash
+   mvn clean package
+   ```
+2. Copy the generated `target/SmartStudy.war` to Apache Tomcat's `webapps/` directory.
+3. Start Tomcat and visit:
+   ```
+   http://localhost:8080/SmartStudy/
+   ```
+
+---
 
 ### Credentials for Demo Evaluation:
 | Role | Email | Password | Or Use Quick Action Button |
