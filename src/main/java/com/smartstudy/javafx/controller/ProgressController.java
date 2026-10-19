@@ -13,12 +13,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Controller for Progress Analytics view.
  * Demonstrates: HashSet collection for unique completed topics, progress calculations.
+ * All metrics derived directly from MySQL database without hardcoded fallbacks.
  */
 public class ProgressController {
 
@@ -38,18 +40,24 @@ public class ProgressController {
 
     @FXML
     public void initialize() {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            Main.switchScene("login.fxml");
+            return;
+        }
         loadProgressData();
     }
 
     private void loadProgressData() {
         int studentId = UserSession.getInstance().getCurrentUserId();
 
-        double overall = 72.5;
-        double studyHours = 14.5;
+        double overall = 0.0;
+        double studyHours = 0.0;
         try {
             overall = progressService.calculateOverallProgress(studentId);
             studyHours = progressService.calculateTotalStudyHours(studentId);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // Keep at 0.0 if unable to calculate
+        }
 
         if (overallProgressValueLabel != null) {
             overallProgressValueLabel.setText(String.format("%.1f%%", overall));
@@ -74,28 +82,24 @@ public class ProgressController {
         if (subjectProgressContainer == null) return;
         subjectProgressContainer.getChildren().clear();
 
-        List<Subject> subjects;
+        List<Subject> subjects = new ArrayList<>();
         try {
             subjects = subjectService.getSubjectsByStudentId(studentId);
-            if (subjects.isEmpty()) {
-                subjects = List.of(
-                    new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                    new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                    new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0),
-                    new Subject(4, studentId, "Computer Networks", "CSE3004", 3, 80.0)
-                );
-            }
         } catch (Exception e) {
-            subjects = List.of(
-                new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0)
-            );
+            // Error loading subjects
+        }
+
+        if (subjects.isEmpty()) {
+            Label emptyLbl = new Label("No subjects enrolled yet. Add subjects in the Subjects tab to see progress here.");
+            emptyLbl.getStyleClass().add("text-muted");
+            emptyLbl.setPadding(new Insets(16));
+            subjectProgressContainer.getChildren().add(emptyLbl);
+            return;
         }
 
         for (Subject sub : subjects) {
-            double prog = 65.0;
-            double hours = 4.0;
+            double prog = 0.0;
+            double hours = 0.0;
             try {
                 prog = progressService.calculateSubjectProgress(sub.getId());
                 hours = progressService.getSubjectStudyHours(sub.getId());

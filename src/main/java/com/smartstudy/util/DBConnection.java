@@ -12,9 +12,9 @@ import java.sql.SQLException;
  */
 public class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/smartstudy?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/smartstudy?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
-    private static final String PASSWORD = ""; // Update with your MySQL password
+    private static final String PASSWORD = "";
 
     static {
         try {

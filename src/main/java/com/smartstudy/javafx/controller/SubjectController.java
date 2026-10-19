@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Controller for Subject Management screen.
  * Demonstrates Collections (HashMap lookup via SubjectService) and CRUD operations.
+ * All data is fetched from and persisted to the MySQL database.
  */
 public class SubjectController {
 
@@ -55,24 +56,12 @@ public class SubjectController {
 
         try {
             List<Subject> subjects = subjectService.getSubjectsByStudentId(studentId);
+            subjectList.addAll(subjects);
             if (subjects.isEmpty()) {
-                // Populate sample subjects for evaluation/demo
-                subjectList.addAll(
-                    new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                    new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                    new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0),
-                    new Subject(4, studentId, "Computer Networks", "CSE3004", 3, 80.0)
-                );
-            } else {
-                subjectList.addAll(subjects);
+                showStatus("No subjects found. Add your first subject below!", false);
             }
         } catch (Exception e) {
-            subjectList.addAll(
-                new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0),
-                new Subject(4, studentId, "Computer Networks", "CSE3004", 3, 80.0)
-            );
+            showStatus("Database error: " + e.getMessage(), true);
         }
 
         if (subjectTable != null) {
@@ -99,18 +88,19 @@ public class SubjectController {
             int studentId = UserSession.getInstance().getCurrentUserId();
             Subject newSubject = new Subject(0, studentId, name.trim(), code.trim(), credits, targetMarks);
 
-            try {
-                int generatedId = subjectService.addSubject(newSubject);
-                newSubject.setId(generatedId > 0 ? generatedId : subjectList.size() + 1);
-            } catch (Exception e) {
-                newSubject.setId(subjectList.size() + 1);
+            int generatedId = subjectService.addSubject(newSubject);
+            if (generatedId > 0) {
+                newSubject.setId(generatedId);
+                subjectList.add(newSubject);
+                clearFields();
+                showStatus("Subject '" + name + "' added successfully!", false);
+            } else {
+                showStatus("Failed to add subject. Check database connection.", true);
             }
-
-            subjectList.add(newSubject);
-            clearFields();
-            showStatus("Subject '" + name + "' added successfully!", false);
         } catch (NumberFormatException e) {
             showStatus("Credits must be integer and Target Marks numeric.", true);
+        } catch (Exception e) {
+            showStatus("Error adding subject: " + e.getMessage(), true);
         }
     }
 
@@ -122,12 +112,13 @@ public class SubjectController {
             return;
         }
 
-        try {
-            subjectService.deleteSubject(selected.getId());
-        } catch (Exception ignored) {}
-
-        subjectList.remove(selected);
-        showStatus("Subject '" + selected.getName() + "' deleted.", false);
+        boolean deleted = subjectService.deleteSubject(selected.getId());
+        if (deleted) {
+            subjectList.remove(selected);
+            showStatus("Subject '" + selected.getName() + "' deleted.", false);
+        } else {
+            showStatus("Failed to delete subject from database.", true);
+        }
     }
 
     private void clearFields() {

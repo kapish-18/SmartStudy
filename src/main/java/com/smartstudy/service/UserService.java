@@ -38,6 +38,10 @@ public class UserService {
         return userDAO.findById(id);
     }
 
+    public java.util.List<User> getUsersByRole(String role) {
+        return userDAO.findByRole(role);
+    }
+
     public int register(User user) {
         return userDAO.insert(user);
     }

@@ -2,6 +2,8 @@ package com.smartstudy.dao;
 
 import com.smartstudy.model.User;
 
+import java.util.List;
+
 /**
  * DAO interface for User operations.
  * Defines database operations without exposing SQL to controllers.
@@ -23,6 +25,11 @@ public interface UserDAO {
      * Finds a user by their email.
      */
     User findByEmail(String email);
+
+    /**
+     * Finds all users with a specific role (e.g. "STUDENT" or "TEACHER").
+     */
+    List<User> findByRole(String role);
 
     /**
      * Inserts a new user into the database.

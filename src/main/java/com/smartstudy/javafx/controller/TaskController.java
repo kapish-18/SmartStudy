@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Controller for Task Management.
- * Explicitly tests and demonstrates custom InvalidTaskException handling.
+ * All data from MySQL database. Demonstrates custom InvalidTaskException handling.
  */
 public class TaskController {
 
@@ -81,25 +81,12 @@ public class TaskController {
         int studentId = UserSession.getInstance().getCurrentUserId();
         try {
             List<Subject> subjects = subjectService.getSubjectsByStudentId(studentId);
-            if (subjects.isEmpty()) {
-                subjects = List.of(
-                    new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                    new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                    new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0)
-                );
-            }
             subjectComboBox.setItems(FXCollections.observableArrayList(subjects));
             if (!subjects.isEmpty()) {
                 subjectComboBox.setValue(subjects.get(0));
             }
         } catch (Exception e) {
-            subjectComboBox.setItems(FXCollections.observableArrayList(
-                new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0)
-            ));
-            if (!subjectComboBox.getItems().isEmpty()) {
-                subjectComboBox.setValue(subjectComboBox.getItems().get(0));
-            }
+            showStatus("Could not load subjects from database.", true);
         }
     }
 
@@ -109,22 +96,12 @@ public class TaskController {
 
         try {
             List<Task> tasks = taskService.getTasksByStudentId(studentId);
+            taskList.addAll(tasks);
             if (tasks.isEmpty()) {
-                taskList.addAll(
-                    new Task(1, studentId, 1, "Complete B-Tree Indexing Assignment", "Implement B-Tree in Java", 5, LocalDate.now().plusDays(2), "PENDING", 120),
-                    new Task(2, studentId, 2, "Dynamic Programming Knapsack Problem", "Solve 0/1 knapsack problems", 4, LocalDate.now().plusDays(4), "PENDING", 90),
-                    new Task(3, studentId, 3, "Build JavaFX Dashboard Screens", "Finish prototype views", 5, LocalDate.now().plusDays(1), "IN_PROGRESS", 180),
-                    new Task(4, studentId, 1, "Read ER Modeling Chapter", "Review 3NF and BCNF", 2, LocalDate.now().minusDays(1), "COMPLETED", 60)
-                );
-            } else {
-                taskList.addAll(tasks);
+                showStatus("No tasks yet. Add your first task below!", false);
             }
         } catch (Exception e) {
-            taskList.addAll(
-                new Task(1, studentId, 1, "Complete B-Tree Indexing Assignment", "Implement B-Tree in Java", 5, LocalDate.now().plusDays(2), "PENDING", 120),
-                new Task(2, studentId, 2, "Dynamic Programming Knapsack Problem", "Solve 0/1 knapsack problems", 4, LocalDate.now().plusDays(4), "PENDING", 90),
-                new Task(3, studentId, 3, "Build JavaFX Dashboard Screens", "Finish prototype views", 5, LocalDate.now().plusDays(1), "IN_PROGRESS", 180)
-            );
+            showStatus("Database error loading tasks: " + e.getMessage(), true);
         }
 
         if (taskTable != null) {
@@ -139,7 +116,7 @@ public class TaskController {
         LocalDate deadline = deadlinePicker != null ? deadlinePicker.getValue() : null;
         Integer priority = priorityComboBox != null ? priorityComboBox.getValue() : 3;
         Subject selectedSubject = subjectComboBox != null ? subjectComboBox.getValue() : null;
-        int subjectId = selectedSubject != null ? selectedSubject.getId() : 1;
+        int subjectId = selectedSubject != null ? selectedSubject.getId() : 0;
         int studentId = UserSession.getInstance().getCurrentUserId();
 
         int estMinutes = 60;
@@ -157,19 +134,20 @@ public class TaskController {
 
         try {
             // This triggers custom InvalidTaskException if title is empty or deadline is in past
-            taskService.addTask(newTask);
-            newTask.setId(taskList.size() + 1);
-            taskList.add(newTask);
-            clearFields();
-            showStatus("Task added successfully!", false);
+            int generatedId = taskService.addTask(newTask);
+            if (generatedId > 0) {
+                newTask.setId(generatedId);
+                taskList.add(newTask);
+                clearFields();
+                showStatus("Task added successfully!", false);
+            } else {
+                showStatus("Failed to save task to database.", true);
+            }
         } catch (InvalidTaskException e) {
             // Demonstrates handling user-defined exception!
             showStatus("[InvalidTaskException] " + e.getMessage(), true);
         } catch (Exception e) {
-            newTask.setId(taskList.size() + 1);
-            taskList.add(newTask);
-            clearFields();
-            showStatus("Task saved (demo mode)!", false);
+            showStatus("Error: " + e.getMessage(), true);
         }
     }
 
@@ -196,13 +174,14 @@ public class TaskController {
             return;
         }
 
-        selected.setStatus("COMPLETED");
-        try {
-            taskService.markComplete(selected.getId());
-        } catch (Exception ignored) {}
-
-        taskTable.refresh();
-        showStatus("Task '" + selected.getTitle() + "' marked as COMPLETED!", false);
+        boolean updated = taskService.markComplete(selected.getId());
+        if (updated) {
+            selected.setStatus("COMPLETED");
+            taskTable.refresh();
+            showStatus("Task '" + selected.getTitle() + "' marked as COMPLETED!", false);
+        } else {
+            showStatus("Failed to update task status in database.", true);
+        }
     }
 
     @FXML
@@ -213,18 +192,18 @@ public class TaskController {
             return;
         }
 
-        try {
-            taskService.deleteTask(selected.getId());
-        } catch (Exception ignored) {}
-
-        taskList.remove(selected);
-        showStatus("Task deleted.", false);
+        boolean deleted = taskService.deleteTask(selected.getId());
+        if (deleted) {
+            taskList.remove(selected);
+            showStatus("Task deleted.", false);
+        } else {
+            showStatus("Failed to delete task from database.", true);
+        }
     }
 
     private void applyFilter() {
         if (filterComboBox == null) return;
         String filter = filterComboBox.getValue();
-        int studentId = UserSession.getInstance().getCurrentUserId();
 
         if ("Pending Only".equals(filter)) {
             taskTable.setItems(taskList.filtered(t -> !"COMPLETED".equalsIgnoreCase(t.getStatus())));

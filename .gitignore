@@ -6,5 +6,7 @@ reports/*.txt
 *.iml
 .vscode/
 .settings/
-.project/
-.classpath/
+.project
+.classpath
+bin/
+

@@ -19,6 +19,7 @@ import java.util.List;
 /**
  * Controller for Exam Management screen.
  * Records upcoming exams and marks obtained.
+ * All data from MySQL database — no hardcoded fallback data.
  */
 public class ExamController {
 
@@ -68,18 +69,10 @@ public class ExamController {
         int studentId = UserSession.getInstance().getCurrentUserId();
         try {
             List<Subject> subjects = subjectService.getSubjectsByStudentId(studentId);
-            if (subjects.isEmpty()) {
-                subjects = List.of(
-                    new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                    new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0)
-                );
-            }
             subjectComboBox.setItems(FXCollections.observableArrayList(subjects));
             if (!subjects.isEmpty()) subjectComboBox.setValue(subjects.get(0));
         } catch (Exception e) {
-            subjectComboBox.setItems(FXCollections.observableArrayList(
-                new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0)
-            ));
+            showStatus("Could not load subjects from database.", true);
         }
     }
 
@@ -89,21 +82,12 @@ public class ExamController {
 
         try {
             List<Exam> exams = examDAO.findByStudentId(studentId);
+            examList.addAll(exams);
             if (exams.isEmpty()) {
-                Exam e1 = new Exam(1, 1, "DBMS Midterm Assessment", LocalDate.now().plusDays(4), 50.0, -1);
-                e1.setSubjectName("Database Management Systems");
-                Exam e2 = new Exam(2, 2, "DAA Quiz 2", LocalDate.now().plusDays(10), 20.0, -1);
-                e2.setSubjectName("Design & Analysis of Algorithms");
-                Exam e3 = new Exam(3, 3, "Java CAT 1", LocalDate.now().minusDays(14), 50.0, 46.5);
-                e3.setSubjectName("Advanced Java Programming");
-                examList.addAll(e1, e2, e3);
-            } else {
-                examList.addAll(exams);
+                showStatus("No exams scheduled yet. Add your first exam below!", false);
             }
         } catch (Exception e) {
-            Exam e1 = new Exam(1, 1, "DBMS Midterm Assessment", LocalDate.now().plusDays(4), 50.0, -1);
-            e1.setSubjectName("Database Management Systems");
-            examList.add(e1);
+            showStatus("Database error loading exams: " + e.getMessage(), true);
         }
 
         if (examTable != null) {
@@ -128,18 +112,19 @@ public class ExamController {
             Exam exam = new Exam(0, subject.getId(), name.trim(), date, targetMarks, -1);
             exam.setSubjectName(subject.getName());
 
-            try {
-                int id = examDAO.insert(exam);
-                exam.setId(id > 0 ? id : examList.size() + 1);
-            } catch (Exception e) {
-                exam.setId(examList.size() + 1);
+            int id = examDAO.insert(exam);
+            if (id > 0) {
+                exam.setId(id);
+                examList.add(exam);
+                if (examNameField != null) examNameField.clear();
+                showStatus("Exam added successfully!", false);
+            } else {
+                showStatus("Failed to save exam to database.", true);
             }
-
-            examList.add(exam);
-            if (examNameField != null) examNameField.clear();
-            showStatus("Exam added successfully!", false);
         } catch (NumberFormatException e) {
             showStatus("Target marks must be numeric.", true);
+        } catch (Exception e) {
+            showStatus("Error: " + e.getMessage(), true);
         }
     }
 
@@ -159,14 +144,15 @@ public class ExamController {
 
         try {
             double marks = Double.parseDouble(marksStr.trim());
-            selected.setMarksObtained(marks);
-            try {
-                examDAO.updateMarksObtained(selected.getId(), marks);
-            } catch (Exception ignored) {}
-
-            examTable.refresh();
-            marksObtainedField.clear();
-            showStatus("Marks recorded (" + marks + ") for " + selected.getExamName(), false);
+            boolean updated = examDAO.updateMarksObtained(selected.getId(), marks);
+            if (updated) {
+                selected.setMarksObtained(marks);
+                examTable.refresh();
+                marksObtainedField.clear();
+                showStatus("Marks recorded (" + marks + ") for " + selected.getExamName(), false);
+            } else {
+                showStatus("Failed to update marks in database.", true);
+            }
         } catch (NumberFormatException e) {
             showStatus("Marks must be numeric.", true);
         }

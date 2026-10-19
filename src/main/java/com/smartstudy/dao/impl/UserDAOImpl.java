@@ -7,6 +7,8 @@ import com.smartstudy.model.User;
 import com.smartstudy.util.DBConnection;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * JDBC implementation of UserDAO.
@@ -106,6 +108,24 @@ public class UserDAOImpl implements UserDAO {
             System.err.println("Error updating user: " + e.getMessage());
         }
         return false;
+    }
+
+    @Override
+    public List<User> findByRole(String role) {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = ? ORDER BY id ASC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, role);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapUser(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error finding users by role: " + e.getMessage());
+        }
+        return list;
     }
 
     /**

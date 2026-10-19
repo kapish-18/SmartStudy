@@ -1,12 +1,10 @@
 package com.smartstudy.util;
 
-import com.smartstudy.model.Student;
 import com.smartstudy.model.User;
 
 /**
  * Singleton holder for current user session state in the JavaFX client.
- * Keeps track of who is logged in and provides default fallback student
- * for quick testing/prototype evaluation.
+ * Keeps track of who is logged in.
  */
 public class UserSession {
 
@@ -14,9 +12,8 @@ public class UserSession {
     private User currentUser;
 
     private UserSession() {
-        // Initialize with default sample student for convenient testing
-        Student defaultStudent = new Student(1, "Alex Johnson", "alex@smartstudy.edu", "pass123", "2024-CSE-042");
-        this.currentUser = defaultStudent;
+        // No default user — requires proper authentication
+        this.currentUser = null;
     }
 
     public static synchronized UserSession getInstance() {
@@ -35,11 +32,15 @@ public class UserSession {
     }
 
     public int getCurrentUserId() {
-        return currentUser != null ? currentUser.getId() : 1;
+        return currentUser != null ? currentUser.getId() : -1;
     }
 
     public String getCurrentUserName() {
-        return currentUser != null ? currentUser.getName() : "Student";
+        return currentUser != null ? currentUser.getName() : "Guest";
+    }
+
+    public String getCurrentUserRole() {
+        return currentUser != null ? currentUser.getRole() : "STUDENT";
     }
 
     public boolean isLoggedIn() {
@@ -47,7 +48,6 @@ public class UserSession {
     }
 
     public void logout() {
-        Student defaultStudent = new Student(1, "Alex Johnson", "alex@smartstudy.edu", "pass123", "2024-CSE-042");
-        this.currentUser = defaultStudent;
+        this.currentUser = null;
     }
 }

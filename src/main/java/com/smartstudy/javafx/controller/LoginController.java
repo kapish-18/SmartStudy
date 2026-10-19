@@ -2,7 +2,6 @@ package com.smartstudy.javafx.controller;
 
 import com.smartstudy.Main;
 import com.smartstudy.exception.InvalidLoginException;
-import com.smartstudy.model.Student;
 import com.smartstudy.model.User;
 import com.smartstudy.service.UserService;
 import com.smartstudy.util.UserSession;
@@ -14,6 +13,7 @@ import javafx.scene.control.TextField;
 /**
  * Controller for Login view.
  * Handles user authentication with InvalidLoginException handling.
+ * All authentication goes through UserService → UserDAO → MySQL database.
  */
 public class LoginController {
 
@@ -55,29 +55,44 @@ public class LoginController {
             errorLabel.setStyle("-fx-text-fill: #EF4444;");
             errorLabel.setText(e.getMessage());
         } catch (Exception e) {
-            // Fallback for offline demo if DB is not actively running
-            if (email != null && !email.trim().isEmpty()) {
-                Student demo = new Student(1, "Demo Student", email.trim(), password, "2024-DEMO-001");
-                UserSession.getInstance().setCurrentUser(demo);
-                Main.switchScene("dashboard.fxml");
-            } else {
+            errorLabel.setStyle("-fx-text-fill: #EF4444;");
+            errorLabel.setText("Database connection error. Ensure MySQL is running.");
+        }
+    }
+
+    /**
+     * Quick demo login using real DB credentials.
+     * Authenticates alex@smartstudy.edu / pass123 from the database.
+     */
+    @FXML
+    private void handleQuickDemoStudent() {
+        try {
+            User user = userService.login("alex@smartstudy.edu", "pass123");
+            UserSession.getInstance().setCurrentUser(user);
+            Main.switchScene("dashboard.fxml");
+        } catch (Exception e) {
+            if (errorLabel != null) {
                 errorLabel.setStyle("-fx-text-fill: #EF4444;");
-                errorLabel.setText("Please enter a valid email address.");
+                errorLabel.setText("Demo login failed. Ensure MySQL is running and schema.sql has been executed.");
             }
         }
     }
 
-    @FXML
-    private void handleQuickDemoStudent() {
-        Student demo = new Student(1, "Alex Johnson", "alex@smartstudy.edu", "pass123", "2024-CSE-042");
-        UserSession.getInstance().setCurrentUser(demo);
-        Main.switchScene("dashboard.fxml");
-    }
-
+    /**
+     * Quick demo login for teacher role using real DB credentials.
+     * Authenticates sharma@smartstudy.edu / pass123 from the database.
+     */
     @FXML
     private void handleQuickDemoTeacher() {
-        Student demo = new Student(1, "Prof. Sharma", "sharma@smartstudy.edu", "pass123", "FACULTY-01");
-        UserSession.getInstance().setCurrentUser(demo);
-        Main.switchScene("dashboard.fxml");
+        try {
+            User user = userService.login("sharma@smartstudy.edu", "pass123");
+            UserSession.getInstance().setCurrentUser(user);
+            Main.switchScene("dashboard.fxml");
+        } catch (Exception e) {
+            if (errorLabel != null) {
+                errorLabel.setStyle("-fx-text-fill: #EF4444;");
+                errorLabel.setText("Demo login failed. Ensure MySQL is running and schema.sql has been executed.");
+            }
+        }
     }
 }

@@ -19,6 +19,7 @@ import java.util.List;
 /**
  * Controller for Study Session Tracker.
  * Records study duration, topics, and calculates study time.
+ * Real MySQL database integration with no hardcoded fallback data.
  */
 public class StudyController {
 
@@ -47,6 +48,11 @@ public class StudyController {
 
     @FXML
     public void initialize() {
+        if (!UserSession.getInstance().isLoggedIn()) {
+            Main.switchScene("login.fxml");
+            return;
+        }
+
         if (colId != null) colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         if (colSubject != null) colSubject.setCellValueFactory(new PropertyValueFactory<>("subjectName"));
         if (colTopic != null) colTopic.setCellValueFactory(new PropertyValueFactory<>("topic"));
@@ -66,19 +72,12 @@ public class StudyController {
         int studentId = UserSession.getInstance().getCurrentUserId();
         try {
             List<Subject> subjects = subjectService.getSubjectsByStudentId(studentId);
-            if (subjects.isEmpty()) {
-                subjects = List.of(
-                    new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0),
-                    new Subject(2, studentId, "Design & Analysis of Algorithms", "CSE3002", 4, 90.0),
-                    new Subject(3, studentId, "Advanced Java Programming", "CSE3003", 3, 95.0)
-                );
-            }
             subjectComboBox.setItems(FXCollections.observableArrayList(subjects));
-            if (!subjects.isEmpty()) subjectComboBox.setValue(subjects.get(0));
+            if (!subjects.isEmpty()) {
+                subjectComboBox.setValue(subjects.get(0));
+            }
         } catch (Exception e) {
-            subjectComboBox.setItems(FXCollections.observableArrayList(
-                new Subject(1, studentId, "Database Management Systems", "CSE3001", 4, 85.0)
-            ));
+            showStatus("Database error loading subjects: " + e.getMessage(), true);
         }
     }
 
@@ -88,21 +87,12 @@ public class StudyController {
 
         try {
             List<StudySession> sessions = sessionDAO.findByStudentId(studentId);
+            sessionList.addAll(sessions);
             if (sessions.isEmpty()) {
-                StudySession s1 = new StudySession(1, studentId, 1, "Relational Algebra & Normalization", 90, LocalDate.now().minusDays(1));
-                s1.setSubjectName("Database Management Systems");
-                StudySession s2 = new StudySession(2, studentId, 2, "Greedy Algorithms and Huffman Coding", 60, LocalDate.now().minusDays(2));
-                s2.setSubjectName("Design & Analysis of Algorithms");
-                StudySession s3 = new StudySession(3, studentId, 3, "Java Multithreading & Executors", 120, LocalDate.now());
-                s3.setSubjectName("Advanced Java Programming");
-                sessionList.addAll(s1, s2, s3);
-            } else {
-                sessionList.addAll(sessions);
+                showStatus("No study sessions recorded yet. Log your first session below!", false);
             }
         } catch (Exception e) {
-            StudySession s1 = new StudySession(1, studentId, 1, "Relational Algebra", 90, LocalDate.now());
-            s1.setSubjectName("Database Management Systems");
-            sessionList.add(s1);
+            showStatus("Database error loading study sessions: " + e.getMessage(), true);
         }
 
         if (sessionTable != null) {
@@ -126,35 +116,41 @@ public class StudyController {
     @FXML
     private void handleRecordSession() {
         Subject subject = subjectComboBox != null ? subjectComboBox.getValue() : null;
-        String topic = topicField.getText();
-        String durationStr = durationField.getText();
+        String topic = topicField != null ? topicField.getText() : null;
+        String durationStr = durationField != null ? durationField.getText() : null;
         LocalDate date = sessionDatePicker != null ? sessionDatePicker.getValue() : LocalDate.now();
 
         if (subject == null || topic == null || topic.trim().isEmpty() || durationStr == null || durationStr.trim().isEmpty()) {
-            showStatus("Please enter all study session details.", true);
+            showStatus("Please select a subject and enter topic and duration.", true);
             return;
         }
 
         try {
             int duration = Integer.parseInt(durationStr.trim());
+            if (duration <= 0) {
+                showStatus("Duration must be a positive number of minutes.", true);
+                return;
+            }
+
             int studentId = UserSession.getInstance().getCurrentUserId();
             StudySession session = new StudySession(0, studentId, subject.getId(), topic.trim(), duration, date);
             session.setSubjectName(subject.getName());
 
-            try {
-                int id = sessionDAO.insert(session);
-                session.setId(id > 0 ? id : sessionList.size() + 1);
-            } catch (Exception e) {
-                session.setId(sessionList.size() + 1);
+            int id = sessionDAO.insert(session);
+            if (id > 0) {
+                session.setId(id);
+                sessionList.add(session);
+                if (topicField != null) topicField.clear();
+                if (durationField != null) durationField.clear();
+                updateTotalHours();
+                showStatus("Study session recorded successfully! (" + duration + " mins)", false);
+            } else {
+                showStatus("Failed to save study session to database.", true);
             }
-
-            sessionList.add(session);
-            if (topicField != null) topicField.clear();
-            if (durationField != null) durationField.clear();
-            updateTotalHours();
-            showStatus("Study session recorded successfully! (" + duration + " mins)", false);
         } catch (NumberFormatException e) {
-            showStatus("Duration must be a positive integer in minutes.", true);
+            showStatus("Duration must be a valid positive integer in minutes.", true);
+        } catch (Exception e) {
+            showStatus("Error saving session: " + e.getMessage(), true);
         }
     }
 

@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Controller for the Main Student Dashboard.
  * Integrates service layers, recommendations, and background multithreading report generation.
+ * All data is fetched from the MySQL database — no hardcoded fallback values.
  */
 public class DashboardController {
 
@@ -54,6 +55,12 @@ public class DashboardController {
 
     @FXML
     public void initialize() {
+        // Redirect to login if not authenticated
+        if (!UserSession.getInstance().isLoggedIn()) {
+            Main.switchScene("login.fxml");
+            return;
+        }
+
         int studentId = UserSession.getInstance().getCurrentUserId();
         String studentName = UserSession.getInstance().getCurrentUserName();
 
@@ -105,11 +112,11 @@ public class DashboardController {
                 upcomingExamsCountLabel.setText(String.valueOf(upcoming.size()));
             }
         } catch (Exception e) {
-            // Fallback values for prototype robustness
-            if (overallProgressLabel != null) overallProgressLabel.setText("68.5%");
-            if (totalStudyHoursLabel != null) totalStudyHoursLabel.setText("14.5 hrs");
-            if (pendingTasksCountLabel != null) pendingTasksCountLabel.setText("4");
-            if (upcomingExamsCountLabel != null) upcomingExamsCountLabel.setText("2");
+            System.err.println("Error loading dashboard metrics: " + e.getMessage());
+            if (overallProgressLabel != null) overallProgressLabel.setText("N/A");
+            if (totalStudyHoursLabel != null) totalStudyHoursLabel.setText("N/A");
+            if (pendingTasksCountLabel != null) pendingTasksCountLabel.setText("N/A");
+            if (upcomingExamsCountLabel != null) upcomingExamsCountLabel.setText("N/A");
         }
     }
 
@@ -117,28 +124,25 @@ public class DashboardController {
         if (recommendationContainer == null) return;
         recommendationContainer.getChildren().clear();
 
-        List<String> recommendations;
         try {
-            recommendations = recommendationService.generateRecommendations(studentId);
-        } catch (Exception e) {
-            recommendations = List.of(
-                "DBMS Midterm in 4 days. Subject progress is currently below target (55%). Focus here first!",
-                "Assignment 'B-Tree Implementation' is due in 2 days. High Priority.",
-                "DAA: Algorithm Design assignment deadline approaching soon."
-            );
-        }
+            List<String> recommendations = recommendationService.generateRecommendations(studentId);
 
-        if (recommendations.isEmpty()) {
-            Label noRec = new Label("All subjects on track! Keep up the great consistency.");
-            noRec.getStyleClass().add("text-muted");
-            recommendationContainer.getChildren().add(noRec);
-        } else {
-            for (String rec : recommendations) {
-                Label recCard = new Label("💡 " + rec);
-                recCard.setWrapText(true);
-                recCard.getStyleClass().add("recommendation-badge");
-                recommendationContainer.getChildren().add(recCard);
+            if (recommendations.isEmpty()) {
+                Label noRec = new Label("All subjects on track! Keep up the great consistency.");
+                noRec.getStyleClass().add("text-muted");
+                recommendationContainer.getChildren().add(noRec);
+            } else {
+                for (String rec : recommendations) {
+                    Label recCard = new Label("💡 " + rec);
+                    recCard.setWrapText(true);
+                    recCard.getStyleClass().add("recommendation-badge");
+                    recommendationContainer.getChildren().add(recCard);
+                }
             }
+        } catch (Exception e) {
+            Label errorLbl = new Label("Could not load recommendations. Check database connection.");
+            errorLbl.getStyleClass().add("text-muted");
+            recommendationContainer.getChildren().add(errorLbl);
         }
     }
 
@@ -159,11 +163,7 @@ public class DashboardController {
                 }
             }
         } catch (Exception e) {
-            urgentTasksListView.getItems().addAll(
-                "[HIGH] Complete Normalization Practice Problems (Due: Tomorrow)",
-                "[HIGH] Dynamic Programming Knapsack Problem (Due: 3 days)",
-                "[MEDIUM] Socket Programming Lab Report (Due: 5 days)"
-            );
+            urgentTasksListView.getItems().add("Could not load tasks. Check database connection.");
         }
     }
 
