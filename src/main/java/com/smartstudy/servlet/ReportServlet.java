@@ -22,10 +22,17 @@ public class ReportServlet extends HttpServlet {
         req.setAttribute("reports", reportFiles);
 
         String selectedReport = req.getParameter("file");
+        if (selectedReport == null || selectedReport.trim().isEmpty()) {
+            // Auto-select the latest report if available
+            if (!reportFiles.isEmpty()) {
+                selectedReport = reportFiles.get(0);
+            }
+        }
+
         if (selectedReport != null && !selectedReport.trim().isEmpty()) {
             try {
                 String content = FileUtil.readReport(selectedReport.trim());
-                req.setAttribute("selectedFile", selectedReport);
+                req.setAttribute("selectedFile", selectedReport.trim());
                 req.setAttribute("reportContent", content);
             } catch (IOException e) {
                 req.setAttribute("reportContent", "Error reading report: " + e.getMessage());
