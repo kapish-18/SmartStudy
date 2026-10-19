@@ -36,7 +36,7 @@
             <tbody>
                 <%
                     List<Student> students = (List<Student>) request.getAttribute("students");
-                    if (students != null) {
+                    if (students != null && !students.isEmpty()) {
                         for (Student s : students) {
                 %>
                 <tr>
@@ -49,8 +49,12 @@
                 </tr>
                 <%
                         }
-                    }
+                    } else {
                 %>
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records found in database.</td>
+                </tr>
+                <% } %>
             </tbody>
         </table>
     </div>

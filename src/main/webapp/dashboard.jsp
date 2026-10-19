@@ -18,26 +18,31 @@
 
     <div class="container">
         <div class="page-header">
-            <h1>Academic Overview &amp; Batch Analytics</h1>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <h1>Academic Overview &amp; Batch Analytics</h1>
+                <span style="color: var(--primary); font-weight: 600; font-size: 1rem;">
+                    <%= session.getAttribute("userName") != null ? session.getAttribute("userName") : "Prof. Sharma" %>
+                </span>
+            </div>
             <p>Teacher portal for tracking student cohort progress and completion metrics</p>
         </div>
 
         <div class="stats-grid">
             <div class="card">
                 <h3>Cohort Avg. Progress</h3>
-                <div class="stat"><%= request.getAttribute("avgProgress") != null ? request.getAttribute("avgProgress") : "72.5" %>%</div>
+                <div class="stat"><%= request.getAttribute("avgProgress") != null ? request.getAttribute("avgProgress") : "0.0" %>%</div>
             </div>
             <div class="card">
                 <h3>Total Study Logged</h3>
-                <div class="stat" style="color: var(--emerald);"><%= request.getAttribute("totalHours") != null ? request.getAttribute("totalHours") : "14.5" %> hrs</div>
+                <div class="stat" style="color: var(--emerald);"><%= request.getAttribute("totalHours") != null ? request.getAttribute("totalHours") : "0.0" %> hrs</div>
             </div>
             <div class="card">
                 <h3>Completed Tasks</h3>
-                <div class="stat"><%= request.getAttribute("completedTasks") != null ? request.getAttribute("completedTasks") : "12" %></div>
+                <div class="stat"><%= request.getAttribute("completedTasks") != null ? request.getAttribute("completedTasks") : "0" %></div>
             </div>
             <div class="card">
                 <h3>Active Tasks Pending</h3>
-                <div class="stat" style="color: var(--amber);"><%= request.getAttribute("pendingTasks") != null ? request.getAttribute("pendingTasks") : "4" %></div>
+                <div class="stat" style="color: var(--amber);"><%= request.getAttribute("pendingTasks") != null ? request.getAttribute("pendingTasks") : "0" %></div>
             </div>
         </div>
 
