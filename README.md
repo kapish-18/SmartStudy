@@ -1,244 +1,274 @@
 # ⚡ SmartStudy: Intelligent Academic Planning & Progress Management System
 
-> **A Comprehensive Academic Management Platform Built with Java, JavaFX, JDBC, MySQL, Servlets & JSP.**  
-> Designed for university students to track coursework, assignments, exams, and study hours with intelligent rule-based study recommendations, non-blocking background report generation, and dual-interface architecture (Desktop App + Web Portal).
+> **A Comprehensive Dual-Tier Academic Planning Platform Built with Core Java, JavaFX, JDBC, MySQL, Jakarta Servlets & JSP.**  
+> Designed for university academic environments to streamline student coursework tracking, exam preparation, and study analytics, while providing faculty members with a centralized web portal for cohort-wide performance monitoring.
 
 ---
 
 ## 📑 Table of Contents
-1. [Architectural Overview & System Design](#1-architectural-overview--system-design)
-2. [Java Concepts & Technical Mapping (Viva Ready)](#2-java-concepts--technical-mapping-viva-ready)
-3. [Step-by-Step Live Demo Script for Evaluators](#3-step-by-step-live-demo-script-for-evaluators)
-4. [Complete Project Structure & File Guide](#4-complete-project-structure--file-guide)
-5. [Database Schema & Seed Data (MySQL via XAMPP)](#5-database-schema--seed-data-mysql-via-xampp)
-6. [How to Run the Project (Eclipse IDE & Terminal)](#6-how-to-run-the-project-eclipse-ide--terminal)
-7. [Teacher Portal: JavaFX vs. JSP/Servlet Architecture](#7-teacher-portal-javafx-vs-jspservlet-architecture)
-8. [3-Person Team Division & Presentation Guide](#8-3-person-team-division--presentation-guide)
+1. [Executive Summary](#1-executive-summary)
+2. [System Architecture](#2-system-architecture)
+3. [Key Modules & Functionality](#3-key-modules--functionality)
+4. [Implementation of Core Java Concepts](#4-implementation-of-core-java-concepts)
+5. [Database Architecture & Relational Schema](#5-database-architecture--relational-schema)
+6. [Project Directory Structure](#6-project-directory-structure)
+7. [Installation & Execution Guide](#7-installation--execution-guide)
+8. [Demonstration Credentials](#8-demonstration-credentials)
 
 ---
 
-## 1. Architectural Overview & System Design
+## 1. Executive Summary
+
+In higher education, students frequently manage complex schedules spanning multiple credit-heavy courses, overlapping project deadlines, and approaching midterm evaluations. Traditional to-do utilities offer static task lists without contextual awareness of academic deadlines or course weightings.
+
+**SmartStudy** addresses this by delivering an end-to-end, data-driven academic productivity system with two distinct user interfaces operating over a shared persistence and business logic core:
+- **Student Desktop Interface (JavaFX)**: A reactive, local desktop application providing focused study session tracking, priority-ordered task queues, automated recommendations, and non-blocking background weekly academic report generation.
+- **Faculty / Administrator Web Portal (Jakarta Servlets & JSP)**: A web-based management portal running on Apache Tomcat enabling instructors to inspect cohort-wide progress statistics, view individual student course breakdown and coursework status, and examine generated academic reports.
+
+---
+
+## 2. System Architecture
+
+The application adopts a modular multi-tier architecture adhering to the **Separation of Concerns (SoC)** principle:
 
 ```text
-                          +------------------------------------------------+
-                          |                   SMARTSTUDY                   |
-                          +-----------------------+------------------------+
-                                                  |
-                  +-------------------------------+-------------------------------+
-                  |                                                               |
-     [Desktop Client: JavaFX]                                       [Web Portal: JSP + Servlets]
-  Main student application with FXML,                           Teacher & administrator monitoring portal
-  CSS, reactive GUI & multithreading                            for batch analytics and student progress
-                  |                                                               |
-                  +-------------------------------+-------------------------------+
-                                                  |
-                                       +--------------------+
-                                       |   Service Layer    |
-                                       +--------------------+
-                                       |  Strategy Pattern  |
-                                       |  Collections API   |
-                                       |  Validation & Rule |
-                                       |  Recommendation    |
-                                       +---------+----------+
-                                                 |
-                                       +--------------------+
-                                       |     DAO Layer      |
-                                       +--------------------+
-                                       | UserDAO, TaskDAO   |
-                                       | ExamDAO, SubjectDAO|
-                                       | StudySessionDAO    |
-                                       +---------+----------+
-                                                 |
-                                       +--------------------+
-                                       |   JDBC / MySQL     |
-                                       |  (XAMPP Port 3306) |
-                                       +--------------------+
++-----------------------------------------------------------------------------------+
+|                                 PRESENTATION TIER                                 |
+|                                                                                   |
+|   [Student Desktop Client]                              [Faculty Web Portal]      |
+|    - JavaFX 21 (MVC with FXML)                           - Jakarta Servlets 6.0   |
+|    - Modern Dark Glassmorphic CSS                        - Jakarta JSP 3.1 & CSS  |
+|    - Responsive Stage & Root Switching                   - Apache Tomcat 11.0     |
++-----------------------------------------+-----------------------------------------+
+                                          |
+                                          v
++-----------------------------------------------------------------------------------+
+|                                  BUSINESS TIER                                    |
+|                                                                                   |
+|   - Service Layer: UserService, SubjectService, TaskService, ProgressService      |
+|   - Strategy Design Pattern: Runtime priority scoring (Deadline vs. Exam)         |
+|   - Java Collections API: PriorityQueue, HashMap, HashSet, ArrayList              |
+|   - Concurrency: Background ThreadManager (ExecutorService & JavaFX Tasks)        |
+|   - File I/O: ReportGenerator template pattern (BufferedReader / BufferedWriter)   |
++-----------------------------------------+-----------------------------------------+
+                                          |
+                                          v
++-----------------------------------------------------------------------------------+
+|                                PERSISTENCE TIER                                   |
+|                                                                                   |
+|   - DAO Layer: UserDAO, SubjectDAO, TaskDAO, ExamDAO, StudySessionDAO             |
+|   - Parameterized PreparedStatement queries (SQL Injection Prevention)            |
+|   - JDBC Connection Factory (DBConnection with connection pooling logic)          |
+|   - Relational Database: MySQL 8.0+ (InnoDB, Foreign Keys, Cascade Constraints)   |
++-----------------------------------------------------------------------------------+
 ```
 
-- **Dual Frontends**:
-  - **Student Desktop Interface (JavaFX)**: Main daily hub for students to manage subjects, create tasks, log study timers, view analytics, and generate weekly TXT reports in the background.
-  - **Teacher / Admin Web Portal (JSP + Servlets)**: Web portal accessible via web browser for faculty to view student rosters, inspect individual course progress, and review generated reports.
-- **Shared Backend**: Both clients share the exact same Service, Strategy, DAO, and MySQL database layer.
-- **End-to-End Real Database Integration**: Fully connected to MySQL via JDBC (`com.mysql.cj.jdbc.Driver`). Data added via the desktop client or web portal is persisted directly in MySQL.
+---
+
+## 3. Key Modules & Functionality
+
+### 3.1 Student Desktop Application (JavaFX)
+- **Academic Dashboard**: High-level visual KPI summary showing overall degree progress, total recorded study hours, pending assignments, and upcoming exam count.
+- **Rule-Based Recommendation Engine**: Real-time analytical rules evaluating upcoming exams against current subject progress to generate dynamic warnings (e.g., flagging courses with imminent exams and low completion rates).
+- **Urgent Priority Task Queue**: Prioritizes academic tasks using a `PriorityQueue` integrated with dynamic scoring algorithms.
+- **Course & Subject Management**: Full CRUD interface for maintaining course codes, credits, and target grades.
+- **Task & Coursework Tracker**: To-do management with status filtering (`ALL`, `PENDING`, `IN_PROGRESS`, `COMPLETED`), deadline validation, and completion logging.
+- **Exam Scheduler & Marks Tracker**: Tracks scheduled midterms/finals, target scores, and recorded evaluation results.
+- **Study Session Timer & Pomodoro**: Focus time tracker with one-click presets (25m Pomodoro, 60m, 90m) and topic-based logging.
+- **Progress Analytics**: Visual completion indicators per subject and tracking of unique academic topics mastered.
+- **Asynchronous Weekly Report Generator**: Background multithreaded worker that compiles academic metrics and exports formatted TXT reports without interrupting user interaction.
+
+### 3.2 Faculty Web Portal (Jakarta Servlets & JSP)
+- **Cohort Performance Dashboard**: Aggregates live academic metrics across all enrolled students directly from MySQL (Cohort Average Progress, Total Study Hours Logged, Active vs. Completed Tasks).
+- **Student Roster**: Directory of enrolled students displaying university roll numbers, names, and institutional emails.
+- **Detailed Student Academic Profile**: In-depth inspection view for any selected student displaying their enrolled courses, credit load, target grades, study hours, and active coursework table.
+- **Server Report Browser**: File explorer allowing faculty to inspect generated weekly academic TXT reports stored on disk.
 
 ---
 
-## 2. Java Concepts & Technical Mapping (Viva Ready)
+## 4. Implementation of Core Java Concepts
 
-Every core Java curriculum requirement is cleanly implemented and verifiable in source code:
+Every major object-oriented and enterprise Java paradigm is integrated into the system:
 
-| Java Concept | Exact Implementation | Source File Location |
-| :--- | :--- | :--- |
-| **Abstraction** | `User` declared `abstract` with abstract method `getDashboardType()`. `ReportGenerator` declared `abstract` with `generateReport()`. | [`User.java`](src/main/java/com/smartstudy/model/User.java)<br>[`ReportGenerator.java`](src/main/java/com/smartstudy/report/ReportGenerator.java) |
-| **Inheritance** | `Student extends User` and `Teacher extends User` inheriting common user attributes (`id`, `name`, `email`, `password`, `role`). | [`Student.java`](src/main/java/com/smartstudy/model/Student.java)<br>[`Teacher.java`](src/main/java/com/smartstudy/model/Teacher.java) |
-| **Polymorphism & Strategy Pattern** | `PriorityStrategy` interface/abstract class implemented by `DeadlinePriorityStrategy` and `ExamPriorityStrategy`. `RecommendationService` switches strategies at runtime to calculate task priority. | [`PriorityStrategy.java`](src/main/java/com/smartstudy/strategy/PriorityStrategy.java)<br>[`DeadlinePriorityStrategy.java`](src/main/java/com/smartstudy/strategy/DeadlinePriorityStrategy.java)<br>[`ExamPriorityStrategy.java`](src/main/java/com/smartstudy/strategy/ExamPriorityStrategy.java) |
-| **User-Defined Exceptions** | `InvalidTaskException` thrown when task deadline is in the past or title is missing.<br>`InvalidLoginException` thrown on bad credentials. | [`InvalidTaskException.java`](src/main/java/com/smartstudy/exception/InvalidTaskException.java)<br>[`InvalidLoginException.java`](src/main/java/com/smartstudy/exception/InvalidLoginException.java) |
-| **Java Collections Framework** | • **`PriorityQueue<Task>`**: Sorts urgent tasks by computed priority score.<br>• **`HashMap<Integer, Subject>`**: $O(1)$ fast subject lookup by ID.<br>• **`HashSet<String>`**: Deduplicates completed academic topics.<br>• **`ArrayList<Task>`**: Dynamic filtering of pending and completed tasks. | [`TaskPriorityQueue.java`](src/main/java/com/smartstudy/collections/TaskPriorityQueue.java)<br>[`SubjectService.java`](src/main/java/com/smartstudy/service/SubjectService.java)<br>[`ProgressService.java`](src/main/java/com/smartstudy/service/ProgressService.java)<br>[`TaskService.java`](src/main/java/com/smartstudy/service/TaskService.java) |
-| **Multithreading** | Asynchronous weekly report generation using JavaFX `Task<String>` executed on a daemon background `ExecutorService`, keeping the JavaFX UI 100% responsive. | [`ThreadManager.java`](src/main/java/com/smartstudy/javafx/ThreadManager.java)<br>[`DashboardController.java`](src/main/java/com/smartstudy/javafx/controller/DashboardController.java) |
-| **Java File I/O** | `BufferedWriter` / `BufferedReader` writing timestamped weekly TXT reports to disk and reading them back for in-app preview. | [`FileUtil.java`](src/main/java/com/smartstudy/util/FileUtil.java)<br>[`StudentReportGenerator.java`](src/main/java/com/smartstudy/report/StudentReportGenerator.java) |
-| **JDBC Persistence** | PreparedStatement parameterized queries, connection pooling logic, and full CRUD separation with the DAO design pattern. | [`DBConnection.java`](src/main/java/com/smartstudy/util/DBConnection.java)<br>`com.smartstudy.dao.impl.*` |
-| **JavaFX Desktop GUI** | Clean MVC architecture with FXML layouts, controller binding, observable collections, and custom modern dark theme. | [`src/main/resources/fxml/`](src/main/resources/fxml/)<br>[`style.css`](src/main/resources/css/style.css) |
-| **Servlets & JSP** | Jakarta Servlet 6.0 request routing (`@WebServlet`) and Jakarta JSP 3.1 templates rendering dynamic data with JSTL. | [`src/main/java/com/smartstudy/servlet/`](src/main/java/com/smartstudy/servlet/)<br>[`src/main/webapp/`](src/main/webapp/) |
+### 4.1 Abstraction
+- **Abstract User Entity**: [`com.smartstudy.model.User`](src/main/java/com/smartstudy/model/User.java) encapsulates shared user identity attributes (`id`, `name`, `email`, `password`, `role`) and defines the contract method `public abstract String getDashboardType();`. It prevents direct instantiation of generic user objects.
+- **Abstract Report Generator**: [`com.smartstudy.report.ReportGenerator`](src/main/java/com/smartstudy/report/ReportGenerator.java) defines a template method for constructing header, body, and footer sections of academic reports, leaving concrete formatting to subclasses.
 
----
+### 4.2 Inheritance
+- **Role Hierarchy**: [`Student`](src/main/java/com/smartstudy/model/Student.java) and [`Teacher`](src/main/java/com/smartstudy/model/Teacher.java) extend [`User`](src/main/java/com/smartstudy/model/User.java), inheriting authentication and identification fields while introducing role-specific fields (e.g., `Student.rollNumber`) and role-specific implementations of abstract methods.
+- **Report Hierarchy**: [`StudentReportGenerator`](src/main/java/com/smartstudy/report/StudentReportGenerator.java) extends [`ReportGenerator`](src/main/java/com/smartstudy/report/ReportGenerator.java), implementing the specific multi-section text layout for weekly student progress.
 
-## 3. Step-by-Step Live Demo Script for Evaluators
+### 4.3 Polymorphism & The Strategy Design Pattern
+- **Priority Calculation Strategies**: Implemented via [`PriorityStrategy`](src/main/java/com/smartstudy/strategy/PriorityStrategy.java):
+  - [`DeadlinePriorityStrategy`](src/main/java/com/smartstudy/strategy/DeadlinePriorityStrategy.java): Calculates priority based strictly on days remaining before the assignment deadline.
+  - [`ExamPriorityStrategy`](src/main/java/com/smartstudy/strategy/ExamPriorityStrategy.java): Boosts task priority if an exam for that course is scheduled within a 7-day window.
+- **Runtime Polymorphism**: The [`RecommendationService`](src/main/java/com/smartstudy/service/RecommendationService.java) switches between strategy implementations at runtime depending on the student's upcoming exam schedule, demonstrating behavioral polymorphism and the Open/Closed Principle.
 
-When presenting this project to your professor or examiner, follow this 7-step sequence:
+### 4.4 User-Defined Exceptions
+- [`InvalidTaskException`](src/main/java/com/smartstudy/exception/InvalidTaskException.java): Checked exception thrown by [`TaskService`](src/main/java/com/smartstudy/service/TaskService.java) when task input violates business rules (e.g., empty title, past deadline).
+- [`InvalidLoginException`](src/main/java/com/smartstudy/exception/InvalidLoginException.java): Checked exception thrown by [`UserService`](src/main/java/com/smartstudy/service/UserService.java) when user credentials fail database verification or input parameters are malformed.
 
-### Step 1: Launch & Demonstrate Authentication & OOP Hierarchy
-1. Run `.\run.bat` (or in PowerShell `.\run.ps1`, or Run in Eclipse).
-2. Show the **Sign In Screen**.
-3. **What to explain**:
-   > *"We have an abstract parent class `User` extended by `Student` and `Teacher`. Authentication is handled in `UserService.java` querying MySQL via `UserDAO`. If invalid credentials are provided, our custom exception `InvalidLoginException` is caught and displayed."*
-4. Click the convenient **"Demo Student Login"** button (`alex@smartstudy.edu` / `pass123`).
+### 4.5 Java Collections Framework
+- **`PriorityQueue<Task>`** ([`TaskPriorityQueue.java`](src/main/java/com/smartstudy/collections/TaskPriorityQueue.java)): Backed by a min-heap comparator to ensure the most urgent academic tasks are ordered first ($O(\log n)$ insertion, $O(1)$ retrieval).
+- **`HashMap<Integer, Subject>`** ([`SubjectService.java`](src/main/java/com/smartstudy/service/SubjectService.java)): In-memory key-value cache mapping subject IDs to subject models for constant-time ($O(1)$) lookups during task rendering.
+- **`HashSet<String>`** ([`ProgressService.java`](src/main/java/com/smartstudy/service/ProgressService.java)): Collects topics from study session logs and automatically deduplicates entries to calculate the exact count of unique academic topics studied.
+- **`ArrayList<Task>`** ([`TaskService.java`](src/main/java/com/smartstudy/service/TaskService.java)): Dynamic list structure utilized for sorting, predicate filtering, and populating JavaFX `ObservableList` collections.
 
-### Step 2: Dashboard, KPI Cards & Intelligent Recommendations
-1. You land on the **Dashboard**:
-   - Notice the **4 KPI cards**: Overall Academic Progress (%), Total Study Hours, Pending Tasks, and Upcoming Exams — all queried live from MySQL!
-   - Look at the **💡 Intelligent Rule-Based Recommendations** section:
-     - The engine checks upcoming exams (e.g. DBMS exam in 10 days) against current progress to dynamically flag urgent areas!
-   - Look at the **🔥 Urgent Task Queue**:
-     - Uses **Java Collections `PriorityQueue`** combined with the **Strategy Pattern** to prioritize tasks by deadline proximity and weight.
-2. **What to explain**:
-   > *"The dashboard demonstrates our rule-based intelligence engine implemented in `RecommendationService.java` using the Strategy Pattern to dynamically recalculate priorities based on deadlines and exams."*
+### 4.6 Multithreading & Concurrency
+- **Non-Blocking UI Execution**: In [`DashboardController.java`](src/main/java/com/smartstudy/javafx/controller/DashboardController.java), report generation is decoupled from the JavaFX Application Thread using `javafx.concurrent.Task<String>`.
+- **Thread Management**: [`ThreadManager.java`](src/main/java/com/smartstudy/javafx/ThreadManager.java) manages a thread pool via `ExecutorService` configured with daemon worker threads. The UI remains fully responsive, updating a progress bar while background threads compute metrics and perform file writes.
 
-### Step 3: Demonstrate Multithreading & File I/O
-1. On the dashboard, locate the **"Weekly Academic Report Generator"** card.
-2. Click **"⚡ Generate Report (Background Thread)"**.
-3. Observe:
-   - The UI does **not freeze** at all.
-   - The animated progress bar advances through stages (*Fetching data -> Calculating progress -> Writing to disk*).
-   - Once completed, the full formatted TXT report appears immediately in the preview box!
-4. Click **"📂 View Previous Report"**:
-   - Demonstrates `FileUtil.java` reading the saved file back from the `reports/` folder.
-5. **What to explain**:
-   > *"This highlights Java multithreading via `ThreadManager.java` using `javafx.concurrent.Task` and an `ExecutorService`. The file is written to disk using Java File I/O in `FileUtil.java` using `BufferedWriter` and `BufferedReader`."*
+### 4.7 Java File I/O
+- **Report Persistence**: [`FileUtil.java`](src/main/java/com/smartstudy/util/FileUtil.java) implements `BufferedWriter` wrapping a `FileWriter` inside try-with-resources blocks to write formatted text reports to disk.
+- **Report Parsing**: Uses `BufferedReader` wrapping a `FileReader` with line-by-line reading into `StringBuilder` to load saved reports for preview in both the desktop app and the web portal.
 
-### Step 4: Subject Management & Collections HashMap
-1. In the sidebar, click **"📚 Subjects"**.
-2. Point out the enrolled courses from MySQL (DBMS, DAA, Java, CN).
-3. Fill out the form to add a new subject (e.g., `Cloud Computing`, code `CSE3005`, credits `3`, target `85%`) and click **"Add Subject"**.
-4. The subject is inserted into MySQL, and the table instantly refreshes via JavaFX `ObservableList`.
-5. **What to explain**:
-   > *"In `SubjectService.java`, we maintain an in-memory `HashMap<Integer, Subject>` providing instant $O(1)$ lookup by subject ID alongside MySQL persistence."*
+### 4.8 JDBC & Data Access Object (DAO) Pattern
+- **Separation of Concerns**: Database operations are abstracted behind clean DAO interfaces ([`UserDAO`](src/main/java/com/smartstudy/dao/UserDAO.java), [`SubjectDAO`](src/main/java/com/smartstudy/dao/SubjectDAO.java), [`TaskDAO`](src/main/java/com/smartstudy/dao/TaskDAO.java), [`ExamDAO`](src/main/java/com/smartstudy/dao/ExamDAO.java), [`StudySessionDAO`](src/main/java/com/smartstudy/dao/StudySessionDAO.java)).
+- **SQL Injection Prevention**: All DAO implementations exclusively employ `java.sql.PreparedStatement` with parameterized placeholders (`?`).
+- **Connection Management**: Centralized in [`DBConnection.java`](src/main/java/com/smartstudy/util/DBConnection.java) using JDBC driver `com.mysql.cj.jdbc.Driver`.
 
-### Step 5: Task Management & Testing Custom Exception (`InvalidTaskException`)
-1. Click **"📝 Tasks & To-Dos"**.
-2. Notice the table of tasks, filtering by status (*All, Pending, Completed*), and **"✔ Mark Complete"**.
-3. **Highlight the custom exception test**:
-   - Click the dedicated button: **"⚠️ Test Invalid Deadline (InvalidTaskException)"**.
-   - Notice the red alert: `Verified Custom Exception: [InvalidTaskException] Task deadline cannot be in the past`.
-   - Try adding a task with an empty title; `TaskService` will reject it with `InvalidTaskException`.
-4. **What to explain**:
-   > *"This satisfies the user-defined exception requirement. In `TaskService.java`, adding any task with a past deadline or missing title throws our custom checked exception `InvalidTaskException`, which the UI catches and displays gracefully."*
-
-### Step 6: Exams, Marks & Study Session Tracker
-1. Click **"🎯 Exams & Marks"**:
-   - Demonstrates scheduling exams, setting target marks, and recording actual marks obtained once the exam is evaluated (persisted to MySQL).
-2. Click **"⏱ Study Tracker"**:
-   - Displays total study hours logged from MySQL.
-   - Students can log focused study blocks with one-click presets (**25m Pomodoro**, **60m**, **90m**).
-
-### Step 7: Progress Analytics & HashSet Deduplication
-1. Click **"📈 Progress Analytics"**.
-2. View overall progress bar alongside subject-wise completion bars and target comparisons.
-3. Notice the metric: **`X Unique Topics Studied`**.
-4. **What to explain**:
-   > *"In `ProgressService.java`, we pass student study logs through a `HashSet<String>` to eliminate duplicates and calculate the exact count of unique academic topics mastered."*
+### 4.9 Jakarta Servlets 6.0 & JSP 3.1
+- **Servlet Controllers**: Annotated with `@WebServlet` ([`LoginServlet`](src/main/java/com/smartstudy/servlet/LoginServlet.java), [`DashboardServlet`](src/main/java/com/smartstudy/servlet/DashboardServlet.java), [`StudentServlet`](src/main/java/com/smartstudy/servlet/StudentServlet.java), [`ProgressServlet`](src/main/java/com/smartstudy/servlet/ProgressServlet.java), [`ReportServlet`](src/main/java/com/smartstudy/servlet/ReportServlet.java)) to process HTTP GET/POST requests and forward data to views.
+- **Session Tracking**: Managed via `jakarta.servlet.http.HttpSession` to preserve teacher identity across requests and handle authentication invalidation upon logout.
+- **View Templates**: JSP pages in `src/main/webapp/` render dynamic HTML using scriptlets, expressions, and scoped attributes.
 
 ---
 
-## 4. Complete Project Structure & File Guide
+## 5. Database Architecture & Relational Schema
+
+The database schema is defined in [`database/schema.sql`](database/schema.sql). It consists of 6 tables with foreign key constraints and cascade actions:
+
+```text
+    +-------------------+           +-----------------------+
+    |       users       |           |       subjects        |
+    +-------------------+           +-----------------------+
+    | id (PK)           |<-----+    | id (PK)               |<-----+
+    | name              |      |    | student_id (FK->users)|      |
+    | email (UNIQUE)    |      |    | name                  |      |
+    | password          |      |    | course_code           |      |
+    | role (ENUM)       |      |    | credits               |      |
+    | created_at        |      |    | target_marks          |      |
+    +-------------------+      |    +-----------------------+      |
+                               |                |                  |
+           +-------------------+                +--------+         |
+           |                                             |         |
+           v                                             v         |
++--------------------------+                 +---------------------+
+|          tasks           |                 |        exams        |
++--------------------------+                 +---------------------+
+| id (PK)                  |                 | id (PK)             |
+| student_id (FK->users)   |                 | subject_id (FK->sub)|
+| subject_id (FK->subjects)|                 | exam_name           |
+| title                    |                 | exam_date           |
+| description              |                 | target_marks        |
+| priority (INT)           |                 | marks_obtained      |
+| deadline (DATE)          |                 +---------------------+
+| status (ENUM)            |
+| estimated_minutes        |                 +---------------------+
++--------------------------+                 |     assignments     |
+                                             +---------------------+
++--------------------------+                 | id (PK)             |
+|      study_sessions      |                 | subject_id (FK->sub)|
++--------------------------+                 | title               |
+| id (PK)                  |                 | deadline (DATE)     |
+| student_id (FK->users)   |                 | status (ENUM)       |
+| subject_id (FK->subjects)|                 | marks               |
+| topic                    |                 +---------------------+
+| duration_minutes (INT)   |
+| session_date (DATE)      |
++--------------------------+
+```
+
+---
+
+## 6. Project Directory Structure
 
 ```text
 SmartStudy/
-│
-├── pom.xml                                  <- Maven POM (Java 21, JavaFX 21, MySQL Connector 8.3, Jakarta Servlet 6.0 & JSP 3.1)
-├── run.bat                                  <- One-click Windows CMD launcher
-├── run.ps1                                  <- One-click PowerShell launcher
-├── README.md                                <- Complete documentation and viva guide
-│
+├── pom.xml                                  <- Maven Project Object Model (Dependencies & Build Specs)
+├── run.bat                                  <- Windows CMD launcher script
+├── run.ps1                                  <- Windows PowerShell launcher script
+├── README.md                                <- Master technical documentation
 ├── database/
-│   └── schema.sql                           <- MySQL database schema (6 tables) with multi-student seed data
+│   └── schema.sql                           <- MySQL DDL schema and seed data
 │
 ├── src/main/java/com/smartstudy/
-│   ├── Launcher.java                        <- Main entry point avoiding JavaFX module classpath check
-│   ├── Main.java                            <- JavaFX Application class managing stage and scene transitions
+│   ├── Launcher.java                        <- Standalone bootstrap entry point for JavaFX
+│   ├── Main.java                            <- JavaFX Application class managing stage and root-swapping
 │   │
-│   ├── model/                               <- Core Domain Models (OOP: Abstraction & Inheritance)
-│   │   ├── User.java                        <- Abstract parent class (id, name, email, password, role)
-│   │   ├── Student.java                     <- Concrete subclass representing students (with rollNumber)
-│   │   ├── Teacher.java                     <- Concrete subclass representing faculty
-│   │   ├── Subject.java                     <- Course model (code, credits, targetMarks)
-│   │   ├── Task.java                        <- Academic task/assignment (deadline, priority, status)
-│   │   ├── Exam.java                        <- Exam model (examDate, targetMarks, marksObtained)
-│   │   ├── Assignment.java                  <- Assignment model (deadline, status, marks)
-│   │   └── StudySession.java                <- Study log model (topic, durationMinutes, sessionDate)
+│   ├── model/                               <- Domain entities (Abstraction, Inheritance, Encapsulation)
+│   │   ├── User.java                        <- Abstract base user class
+│   │   ├── Student.java                     <- Concrete student subclass (rollNumber, overrides)
+│   │   ├── Teacher.java                     <- Concrete faculty subclass
+│   │   ├── Subject.java                     <- Course entity (code, credits, target marks)
+│   │   ├── Task.java                        <- Task entity implementing Comparable
+│   │   ├── Exam.java                        <- Exam scheduling entity
+│   │   ├── Assignment.java                  <- Course assignment entity
+│   │   └── StudySession.java                <- Logged study duration entity
 │   │
-│   ├── strategy/                            <- Strategy Design Pattern (Polymorphism)
-│   │   ├── PriorityStrategy.java            <- Abstract Strategy base defining calculatePriority(Task)
-│   │   ├── DeadlinePriorityStrategy.java    <- Priority calculation based on days remaining until deadline
-│   │   └── ExamPriorityStrategy.java        <- Priority boost for tasks associated with upcoming exams
+│   ├── strategy/                            <- Strategy Design Pattern
+│   │   ├── PriorityStrategy.java            <- Strategy contract interface
+│   │   ├── DeadlinePriorityStrategy.java    <- Proximity-to-deadline scoring algorithm
+│   │   └── ExamPriorityStrategy.java        <- Upcoming-exam priority boost algorithm
 │   │
 │   ├── collections/                         <- Custom Collections Wrappers
-│   │   └── TaskPriorityQueue.java           <- PriorityQueue wrapper sorting tasks by computed priority
+│   │   └── TaskPriorityQueue.java           <- PriorityQueue wrapper for prioritized task retrieval
 │   │
-│   ├── exception/                           <- Custom User-Defined Exceptions
-│   │   ├── InvalidTaskException.java        <- Thrown for past deadlines or invalid task parameters
-│   │   └── InvalidLoginException.java       <- Thrown for invalid authentication credentials
+│   ├── exception/                           <- Custom Checked Exceptions
+│   │   ├── InvalidTaskException.java        <- Thrown on invalid task deadlines/parameters
+│   │   └── InvalidLoginException.java       <- Thrown on authentication failure
 │   │
-│   ├── util/                                <- Utilities & Helpers
-│   │   ├── DBConnection.java                <- JDBC connection factory for MySQL with auto-close
-│   │   ├── ValidationUtil.java              <- Input validators for dates, marks, emails, and strings
+│   ├── util/                                <- Utilities & Persistence Helpers
+│   │   ├── DBConnection.java                <- JDBC connection factory for MySQL
 │   │   ├── FileUtil.java                    <- Java File I/O helper (BufferedReader / BufferedWriter)
-│   │   └── UserSession.java                 <- Singleton session state tracking authenticated user
+│   │   ├── ValidationUtil.java              <- Regular expression and boundary validators
+│   │   └── UserSession.java                 <- Singleton tracking active authenticated session
 │   │
-│   ├── dao/                                 <- DAO Interfaces (Separation of Concerns)
-│   │   ├── UserDAO.java                     <- Includes authenticate, findById, findByEmail, findByRole
+│   ├── dao/                                 <- Data Access Object (DAO) Interfaces
+│   │   ├── UserDAO.java
 │   │   ├── SubjectDAO.java
 │   │   ├── TaskDAO.java
 │   │   ├── ExamDAO.java
 │   │   └── StudySessionDAO.java
 │   │
-│   ├── dao/impl/                            <- DAO JDBC Implementations
+│   ├── dao/impl/                            <- JDBC PreparedStatement DAO Implementations
 │   │   ├── UserDAOImpl.java
 │   │   ├── SubjectDAOImpl.java
 │   │   ├── TaskDAOImpl.java
 │   │   ├── ExamDAOImpl.java
 │   │   └── StudySessionDAOImpl.java
 │   │
-│   ├── service/                             <- Business Logic Layer
-│   │   ├── UserService.java                 <- Authentication and role-based user retrieval
-│   │   ├── SubjectService.java              <- Subject management with HashMap caching
-│   │   ├── TaskService.java                 <- Task CRUD, validation, and ArrayList filtering
-│   │   ├── ProgressService.java             <- Progress calculation, study hours, HashSet topics
-│   │   └── RecommendationService.java       <- Rule-based intelligence engine using Strategy Pattern
+│   ├── service/                             <- Business Logic & Application Services
+│   │   ├── UserService.java                 <- Authentication and role filtering
+│   │   ├── SubjectService.java              <- Subject operations with HashMap cache
+│   │   ├── TaskService.java                 <- Task business rules, validation, ArrayList filtering
+│   │   ├── ProgressService.java             <- Progress analytics, study hours, HashSet deduplication
+│   │   └── RecommendationService.java       <- Rule engine coordinating priority strategies
 │   │
-│   ├── report/                              <- Academic Report Generation
-│   │   ├── ReportGenerator.java             <- Abstract class defining report generation structure
-│   │   └── StudentReportGenerator.java      <- Concrete generator producing detailed weekly TXT report
+│   ├── report/                              <- Academic Report Generation Subsystem
+│   │   ├── ReportGenerator.java             <- Abstract template defining report structure
+│   │   └── StudentReportGenerator.java      <- Concrete report formatter outputting weekly TXT summaries
 │   │
 │   ├── javafx/                              <- JavaFX Desktop Layer
-│   │   ├── ThreadManager.java               <- Background thread manager (JavaFX Task + ExecutorService)
-│   │   └── controller/
-│   │       ├── LoginController.java         <- Authentication and role selection
-│   │       ├── DashboardController.java     <- KPI metrics, recommendations, and background reports
-│   │       ├── SubjectController.java       <- Course management and credits
-│   │       ├── TaskController.java          <- Task table, filters, and InvalidTaskException demo
-│   │       ├── ExamController.java          <- Exam scheduling and marks recording
-│   │       ├── StudyController.java         <- Study logs and Pomodoro timer presets
-│   │       └── ProgressController.java      <- Academic completion analytics and HashSet topics
+│   │   ├── ThreadManager.java               <- ExecutorService managing background worker threads
+│   │   └── controller/                      <- JavaFX MVC Screen Controllers
+│   │       ├── LoginController.java
+│   │       ├── DashboardController.java
+│   │       ├── SubjectController.java
+│   │       ├── TaskController.java
+│   │       ├── ExamController.java
+│   │       ├── StudyController.java
+│   │       └── ProgressController.java
 │   │
-│   └── servlet/                             <- Jakarta Servlets for Teacher Web Portal
-│       ├── LoginServlet.java                <- Route: /web-login
-│       ├── DashboardServlet.java            <- Route: /web-dashboard (cohort-wide metrics from MySQL)
-│       ├── StudentServlet.java              <- Route: /students (queries all enrolled students from MySQL)
-│       ├── ProgressServlet.java             <- Route: /student-progress (individual student progress from MySQL)
-│       └── ReportServlet.java               <- Route: /web-reports (browse generated reports)
+│   └── servlet/                             <- Jakarta Servlets for Faculty Web Portal
+│       ├── LoginServlet.java                <- Web authentication controller (/web-login)
+│       ├── DashboardServlet.java            <- Live cohort analytics aggregator (/web-dashboard)
+│       ├── StudentServlet.java              <- Enrolled student roster controller (/students)
+│       ├── ProgressServlet.java             <- Individual student academic profile (/student-progress)
+│       └── ReportServlet.java               <- Server-side report explorer (/web-reports)
 │
-├── src/main/resources/                      <- JavaFX Presentation Assets
-│   ├── fxml/
+├── src/main/resources/
+│   ├── fxml/                                <- JavaFX FXML Layout Templates
 │   │   ├── login.fxml
 │   │   ├── dashboard.fxml
 │   │   ├── subjects.fxml
@@ -247,151 +277,76 @@ SmartStudy/
 │   │   ├── study.fxml
 │   │   └── progress.fxml
 │   └── css/
-│       └── style.css                        <- Modern Dark Theme (Indigo/Slate glassmorphic palette)
+│       └── style.css                        <- Desktop theme stylesheet
 │
-└── src/main/webapp/                         <- Web Application Layer (JSP + Servlets)
+└── src/main/webapp/                         <- Web Application Layer (Tomcat deployment)
     ├── WEB-INF/
-    │   └── web.xml                          <- Deployment descriptor
-    ├── login.jsp                            <- Faculty web login page
-    ├── dashboard.jsp                        <- Faculty overview & live cohort metrics
-    ├── students.jsp                         <- Enrolled student roster
-    ├── student-progress.jsp                 <- Selected student's subject breakdown
-    ├── reports.jsp                          <- Server-side generated report browser
+    │   └── web.xml                          <- Deployment descriptor (Servlet 6.0 specification)
+    ├── login.jsp                            <- Faculty login interface
+    ├── dashboard.jsp                        <- Cohort performance analytics view
+    ├── students.jsp                         <- Enrolled student directory view
+    ├── student-progress.jsp                 <- Selected student coursework view
+    ├── reports.jsp                          <- Academic report preview view
     └── css/
-        └── web-style.css                    <- Web portal styling
+        └── web-style.css                    <- Web portal stylesheet
 ```
 
 ---
 
-## 5. Database Schema & Seed Data (MySQL via XAMPP)
+## 7. Installation & Execution Guide
 
-The database schema is located in [`database/schema.sql`](database/schema.sql).
-
-### Tables:
-1. `users` (id, name, email, password, role)
-2. `subjects` (id, student_id, name, course_code, credits, target_marks)
-3. `tasks` (id, student_id, subject_id, title, description, priority, deadline, status, estimated_minutes)
-4. `exams` (id, subject_id, exam_name, exam_date, target_marks, marks_obtained)
-5. `assignments` (id, subject_id, title, deadline, status, marks)
-6. `study_sessions` (id, student_id, subject_id, topic, duration_minutes, session_date)
-
-### Setup via XAMPP MySQL:
-1. Open **XAMPP Control Panel** and click **Start** next to **MySQL** (and **Apache** if using phpMyAdmin).
-2. The schema creates the database `smartstudy` automatically. To re-import or reset:
-```bash
-# Using XAMPP MySQL CLI:
-"C:\xampp\mysql\bin\mysql.exe" -u root < database/schema.sql
-
-# Or import database/schema.sql inside phpMyAdmin (http://localhost/phpmyadmin)
-```
-
-### Pre-loaded Seed Accounts:
-| Role | Name | Email | Password | Details |
-| :--- | :--- | :--- | :--- | :--- |
-| **Student** | Alex Johnson | `alex@smartstudy.edu` | `pass123` | 4 subjects, 5 tasks, exams, study logs |
-| **Teacher** | Prof. Sharma | `sharma@smartstudy.edu` | `pass123` | Faculty account for Web Portal |
-| **Student** | Rohan Patel | `rohan@smartstudy.edu` | `pass123` | 3 subjects, Operating Systems task |
-| **Student** | Sneha Reddy | `sneha@smartstudy.edu` | `pass123` | 3 subjects, Software Eng task |
-
----
-
-## 6. How to Run the Project (Eclipse IDE & Terminal)
-
-### Prerequisites
+### 7.1 Prerequisites
 - **Java Development Kit (JDK) 21** or higher.
-- **XAMPP** (with MySQL running on port 3306).
-- **Eclipse IDE for Enterprise Java and Web Developers** (or Eclipse IDE for Java Developers).
+- **XAMPP / MySQL Server** (running on default port `3306`).
+- **Eclipse IDE for Enterprise Java and Web Developers** (or Apache Tomcat 10/11 standalone).
 
 ---
 
-### Method A: Running in Eclipse IDE
-
-#### 1. Importing into Eclipse:
-1. Open Eclipse -> **File** -> **Import...**
-2. Choose **Maven** -> **Existing Maven Projects** -> Click **Next**.
-3. Set **Root Directory** to `SmartStudy` folder (`C:\Users\Kapish\Desktop\vit projects\SmartStudy`).
-4. Select `pom.xml` and click **Finish**.
-5. Wait for Eclipse to resolve dependencies. If needed, right-click the project -> **Maven** -> **Update Project...** -> **OK**.
-
-#### 2. Running the JavaFX Desktop Client in Eclipse:
-1. In the Eclipse **Project Explorer**, navigate to:  
-   `src/main/java` -> `com.smartstudy` -> [`Launcher.java`](src/main/java/com/smartstudy/Launcher.java).
-2. Right-click [`Launcher.java`](src/main/java/com/smartstudy/Launcher.java) -> **Run As** -> **Java Application**.
-   *(Note: Running `Launcher.java` avoids JavaFX module-path restrictions because it doesn't extend Application directly!)*
-3. The JavaFX application window opens immediately!
-
-#### 3. Running the Faculty Web Portal in Eclipse (Tomcat):
-1. In Eclipse, right-click the `SmartStudy` project -> **Run As** -> **Run on Server**.
-2. Select **Apache Tomcat v11.0** (or Tomcat 10) -> Click **Finish**.
-3. Open your browser and navigate to:
+### 7.2 Database Setup
+1. Launch **XAMPP Control Panel** and start **MySQL**.
+2. Execute the schema script using MySQL CLI or phpMyAdmin:
+   ```bash
+   "C:\xampp\mysql\bin\mysql.exe" -u root < database/schema.sql
    ```
-   http://localhost:8080/SmartStudy/login.jsp
-   ```
-4. Sign in with `sharma@smartstudy.edu` / `pass123`.
+   *(Creates the `smartstudy` database, establishes 6 tables, and populates sample students, courses, tasks, and study records).*
 
 ---
 
-### Method B: One-Click Terminal Launch (PowerShell / Windows CMD)
+### 7.3 Executing the JavaFX Desktop Client
 
-Make sure MySQL is running in XAMPP, then simply open a terminal in the project directory and run:
+#### Option A: Running from Eclipse IDE
+1. Open Eclipse -> **File** -> **Import...** -> **Maven** -> **Existing Maven Projects**.
+2. Select the `SmartStudy` directory containing `pom.xml`.
+3. In Project Explorer, locate [`src/main/java/com/smartstudy/Launcher.java`](src/main/java/com/smartstudy/Launcher.java).
+4. Right-click [`Launcher.java`](src/main/java/com/smartstudy/Launcher.java) -> **Run As** -> **Java Application**.
+   *(Note: Executing `Launcher.java` resolves Java 11+ modular boot layer restrictions without requiring VM argument flags).*
 
+#### Option B: Running from Terminal / PowerShell
 ```powershell
 .\run.ps1
 ```
 *(Or in Windows Command Prompt: `.\run.bat`)*
 
-The script automatically detects Java, compiles all sources using the local `.m2` repository JARs, and starts the JavaFX application.
+---
+
+### 7.4 Executing the Faculty Web Portal (Tomcat)
+
+1. In Eclipse, right-click the `SmartStudy` project -> **Run As** -> **Run on Server**.
+2. Select **Apache Tomcat v11.0** (or Tomcat 10) and click **Finish**.
+3. Access the web portal in any browser:
+   ```
+   http://localhost:8080/SmartStudy/login.jsp
+   ```
 
 ---
 
-### Method C: Standard Maven Command (Cross-Platform)
+## 8. Demonstration Credentials
 
-If you have Apache Maven installed on your system PATH:
-```bash
-mvn compile javafx:run
-```
+Pre-seeded database accounts available for testing:
 
----
-
-## 7. Teacher Portal: JavaFX vs. JSP/Servlet Architecture
-
-### Why is there both a Desktop Client and a Web Portal?
-- **Student Desktop Client (JavaFX)**: Students need a fast, reactive, responsive desktop productivity environment for timer presets, study tracking, and offline local TXT report generation.
-- **Teacher / Admin Portal (Jakarta Servlets 6.0 + JSP 3.1)**: Faculty and administrators need a web browser portal to inspect whole student cohorts, monitor individual student completion rates, and review weekly reports without installing a desktop app.
-- **Unified Architecture**: Both frontends connect to the same **Service Layer**, **DAO Layer**, and **MySQL Database**. When a student marks a task complete or logs a study session in the JavaFX desktop app, the faculty dashboard on the web portal immediately reflects the updated cohort metrics!
-
----
-
-## 8. 3-Person Team Division & Presentation Guide
-
-For university project evaluations with a 3-member team, here is the optimal workload and presentation division:
-
-### 👤 Member 1: Core Architecture, OOP Design & Business Logic
-* **Responsibilities**:
-  * Object-Oriented Hierarchy (`User` abstract class, `Student`, `Teacher` subclasses).
-  * Strategy Design Pattern (`PriorityStrategy`, `DeadlinePriorityStrategy`, `ExamPriorityStrategy`).
-  * Custom User-Defined Exceptions (`InvalidTaskException`, `InvalidLoginException`).
-  * In-memory Collections (`HashMap<Integer, Subject>`, `HashSet<String>` for unique topics, `PriorityQueue<Task>`).
-* **Viva Questions to Answer**:
-  * *"How does your Strategy Pattern work at runtime?"* -> Explain `RecommendationService.java` switching between deadline-based and exam-based algorithms.
-  * *"Where are custom exceptions handled?"* -> Explain `TaskService.java` validating dates and `TaskController.java` catching `InvalidTaskException`.
-
-### 👤 Member 2: JavaFX Desktop GUI, Multithreading & File I/O
-* **Responsibilities**:
-  * Modern Dark Glassmorphic JavaFX GUI (`FXML` layouts, CSS styling, table bindings).
-  * Multithreading with `ThreadManager.java` (`javafx.concurrent.Task`, background `ExecutorService`).
-  * Non-blocking Weekly Report Generator keeping the UI smooth during processing.
-  * Java File I/O in `FileUtil.java` (`BufferedWriter` / `BufferedReader` writing & reading TXT reports).
-* **Viva Questions to Answer**:
-  * *"Why did you use multithreading for report generation?"* -> To avoid blocking the JavaFX Application Thread, keeping the progress bar animated and the UI responsive.
-  * *"How does Launcher.java solve JavaFX module boot layer issues?"* -> It acts as a bootstrap class without extending `Application`, circumventing JavaFX module path checks.
-
-### 👤 Member 3: Database, JDBC DAO Layer & Web Portal (Servlets + JSP)
-* **Responsibilities**:
-  * MySQL Database Schema design (6 tables, foreign keys, cascade constraints).
-  * JDBC Persistence with DAO Pattern (`DBConnection.java`, `UserDAOImpl`, `TaskDAOImpl`, `SubjectDAOImpl`, etc.).
-  * Jakarta Servlets (`LoginServlet`, `DashboardServlet`, `StudentServlet`, `ProgressServlet`, `ReportServlet`).
-  * JSP templates with dynamic data rendering and session management.
-* **Viva Questions to Answer**:
-  * *"How do you prevent SQL Injection?"* -> PreparedStatement with parameterized queries in all DAO implementations.
-  * *"How does the web portal calculate batch analytics?"* -> `DashboardServlet.java` queries all student records from MySQL and calculates cohort-wide averages.
+| Interface | Role | Account Name | Email | Password |
+| :--- | :--- | :--- | :--- | :--- |
+| **JavaFX Desktop** | Student | Alex Johnson | `alex@smartstudy.edu` | `pass123` |
+| **JavaFX Desktop** | Student | Rohan Patel | `rohan@smartstudy.edu` | `pass123` |
+| **JavaFX Desktop** | Student | Sneha Reddy | `sneha@smartstudy.edu` | `pass123` |
+| **Web Portal** | Faculty | Prof. Sharma | `sharma@smartstudy.edu` | `pass123` |
